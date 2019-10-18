@@ -4,23 +4,23 @@ import json
 
 
 class AmazonScrapper:
-    
-    headers =  {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
-            'Host': 'www.amazon.in',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-        }
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
+        'Host': 'www.amazon.in',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
+    }
 
     def __init__(self, url):
         print('Running amazon webscrapper...')
         self.url = url
 
-    # returns a list of offers and deals 
+    # returns a list of offers and deals
     def fetch_offers(self, tree):
         list_of_offers = []
         try:
@@ -31,14 +31,14 @@ class AmazonScrapper:
                     if not str(elem).replace("\n", "").replace("\t", "").replace("  ", "").__contains__("Check eligibility here!"):
                         list_of_offers.append(str(elem).replace("\n", "").replace(
                             "\t", "").replace("  ", ""))
-            
-            list_of_offers = list_of_offers[-len(tree.xpath("//li[@class='a-spacing-small a-spacing-top-small']")):]
+
+            list_of_offers = list_of_offers[-len(tree.xpath(
+                "//li[@class='a-spacing-small a-spacing-top-small']")):]
             return list_of_offers
 
         except Exception as e:
             print(Exception, e)
             return []
-
 
     def get_title_price_image(self, retry_count=0):
         resultPage = requests.get(url, headers=self.headers)
@@ -69,8 +69,17 @@ class AmazonScrapper:
         else:
             print("Error fetching the page. Error code: {}".format(resultPage))
 
-        
+    def search_by_title(self):
+        # TODO: Search by title for comparision
+        return
 
+    def search_by_category(self):
+        # TODO: To be implemented for searching by category
+        return
+
+    def cleaning_offers(self):
+        # TODO: Sanitizing the offers
+        return
 
 
 if __name__ == '__main__':
