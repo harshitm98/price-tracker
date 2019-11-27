@@ -17,15 +17,56 @@ class AmazonScrapper:
     }
 
     def __init__(self, url):
-        print('Running amazon webscrapper...')
+        print('Running Amazon Scrapper...')
         self.url = url
 
+    def is_robot_check(self, result_page, retry_count):
+        if str(result_page.content).find("Robot Check") != -1:
+            print("Robot check...")
+            retry_count += 1
+            return True
+
+
+    def get_title(self, tree):
+        return str(tree.xpath(
+                '//*[@id="productTitle"]/text()')[0]).strip()
+
+    def get_price(self, tree):
+        try:
+            normal_price = 0  # if exception occurs while fetching normal price below, because there is a deal - then normal price would be 0
+            normal_price = str(tree.xpath(
+                '//*[@id="priceblock_ourprice"]/text()')[0]).replace("\xa0", "")
+            deal_price = 0
+            return normal_price
+        except Exception as e:
+            deal_price = str(tree.xpath(
+                '//*[@id="priceblock_dealprice"]/text()')[0]).replace("\xa0", "")
+            return deal_price
+
+    def get_image(self, tree):
+        list_dict_keys_of_images_url = list(json.loads(tree.xpath(
+                '//*[@id="landingImage"]/@data-a-dynamic-image')[0]).keys())
+        list_dict_keys_of_images_url.sort()
+        return list_dict_keys_of_images_url[0]
+
+    def get_ratings(self, tree):
+        # TODO: Get the ratings
+        return
+
+    def get_details(self, tree):
+        title = self.get_title(tree)
+        price = self.get_price(tree)
+        image_url = self.get_image(tree)
+        offers_list = self.get_offers_list(tree)
+        print("Title: {}\nPrice: {}\nImage Url: {}\nOffers: {}\n\n".format(title, price, image_url, offers_list))
+
+
     # returns a list of offers and deals
-    def fetch_offers(self, tree):
+    def get_offers_list(self, tree):
         list_of_offers = []
         try:
-            print("The length of list is {}".format(
-                len(tree.xpath("//li[@class='a-spacing-small a-spacing-top-small']"))))
+            # print("The length of list is {}".format(
+            #     len(tree.xpath("//li[@class='a-spacing-small a-spacing-top-small']"))))
             for elem in tree.xpath("//span[@class='a-list-item']/text()"):
                 if str(elem).strip() != "":
                     if not str(elem).replace("\n", "").replace("\t", "").replace("  ", "").__contains__("Check eligibility here!"):
@@ -40,34 +81,16 @@ class AmazonScrapper:
             print(Exception, e)
             return []
 
-    def get_title_price_image(self, retry_count=0):
-        resultPage = requests.get(url, headers=self.headers)
-        if resultPage.status_code == 200:
-            tree = html.fromstring(resultPage.content)
-            if str(resultPage.content).find("Robot Check") != -1:
-                print("Robot check...")
-                retry_count += 1
-                get_title_price_image(retry_count)
+    def load_url(self, retry_count=0):
+        result_page = requests.get(url, headers=self.headers)
+        if result_page.status_code == 200:
+            tree = html.fromstring(result_page.content)
+            if self.is_robot_check(result_page, retry_count):
                 return
-            list_dict_keys_of_images_url = list(json.loads(tree.xpath(
-                '//*[@id="landingImage"]/@data-a-dynamic-image')[0]).keys())
-            list_dict_keys_of_images_url.sort()
+            self.get_details(tree)
 
-            # Fetching prices and deal prices
-            try:
-                normal_price = 0  # if exception occurs while fetching normal price below, because there is a deal - then normal price would be 0
-                normal_price = str(tree.xpath(
-                    '//*[@id="priceblock_ourprice"]/text()')[0]).replace("\xa0", "")
-                deal_price = 0
-            except Exception as e:
-                deal_price = str(tree.xpath(
-                    '//*[@id="priceblock_dealprice"]/text()')[0]).replace("\xa0", "")
-            # TODO : Store in variables and in the return everything
-            print("Title: {}\tNormal Price: {}\tDeal Price: {}\tImage Url: {}".format(str(tree.xpath(
-                '//*[@id="productTitle"]/text()')[0]).strip(), normal_price, deal_price, list_dict_keys_of_images_url[0]))
-            offers = self.fetch_offers(tree)
         else:
-            print("Error fetching the page. Error code: {}".format(resultPage))
+            print("Error fetching the page. Error code: {}".format(result_page))
 
     def search_by_title(self):
         # TODO: Search by title for comparision
@@ -91,4 +114,4 @@ if __name__ == '__main__':
     urls.append('https://www.amazon.in/gp/product/B07HGH3G46/ref=s9_acss_bw_cg_Topbann_2c1_w?pf_rd_m=A1K21FY43GMZF8&pf_rd_s=merchandised-search-4&pf_rd_r=87HV9NERA664RNVRESB6&pf_rd_t=101&pf_rd_p=6c0e5a1a-a9c2-441c-968c-513e0354b7a3&pf_rd_i=16613114031')
 
     for url in urls:
-        AmazonScrapper(url).get_title_price_image()
+        AmazonScrapper(url).load_url()
